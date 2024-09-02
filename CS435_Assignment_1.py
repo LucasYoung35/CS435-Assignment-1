@@ -1,8 +1,15 @@
-import xml.etree.ElementTree as ET
+import lxml.etree as ET
 import os
 
 from PIL import Image
 from PIL import ImageDraw
+
+
+
+#path to xml and png files
+folder_path = '.\Programming-Assignment-Data\\'
+dir_list = os.listdir(folder_path)
+
 
 #function to parse through xml file and find leaf nodes with a bounds attribute
 #takes xml file path as parameter and returns a list of integers containing information about bounding boxes
@@ -10,18 +17,22 @@ def parseXML(xml_file):
 
     bounding_boxes = []
 
-    tree = ET.parse(xml_file)
-    root = tree.getroot()
+    try:
+        parser = ET.XMLParser(recover=True)
+        tree = ET.parse(xml_file, parser=parser)
+        root = tree.getroot()
 
-    for node in root.iter():
+        for node in root.iter():
 
-        #check if node is a leaf and has bounds attribute
-        if len(node) == 0 and node.attrib.get('bounds') is not None:
-            bounds = node.attrib.get('bounds')
+            #check if node is a leaf and has bounds attribute
+            if len(node) == 0 and node.attrib.get('bounds') is not None:
+                bounds = node.attrib.get('bounds')
 
-            #clean up bounding boxes and convert to integers
-            bounds = bounds.replace('][', ' ').replace(',', ' ').replace('[', '').replace(']','')
-            bounding_boxes.append(list(map(int, bounds.split(' '))))
+                #clean up bounding boxes and convert to integers
+                bounds = bounds.replace('][', ' ').replace(',', ' ').replace('[', '').replace(']','')
+                bounding_boxes.append(list(map(int, bounds.split(' '))))
+    except ET.ParseError:
+        print("Parse Error: Could not parse", xml_file)
 
     return bounding_boxes
 
@@ -39,16 +50,12 @@ def drawBox(image, bounding_boxes):
 
 
         try:
-            im.save('test.png')
+            im.save('modified.'+image.replace(folder_path, ''))
         except OSError:
             print("cannot convert")
 
 
 def main():
-
-    #path to xml and png files
-    folder_path = '.\Programming-Assignment-Data\\'
-    dir_list = os.listdir(folder_path)
 
     #sort xml and png files
     xml_list = []
@@ -60,7 +67,8 @@ def main():
         else:
             png_list.append(f)
 
-    drawBox(folder_path+png_list[1], parseXML(folder_path+xml_list[1]))
+    for i in range(len(png_list)):
+        drawBox(folder_path+png_list[i], parseXML(folder_path+xml_list[i]))
 
 
 
